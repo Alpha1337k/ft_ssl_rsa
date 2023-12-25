@@ -2,11 +2,16 @@
 
 int main(int argc, char **argv)
 {
-	base64_encode("Man", 3);
-	base64_encode("Ma", 2);
-	base64_encode("M", 1);
-	base64_encode("light work.", 11);
-	base64_encode("light work", 10);
+	// base64_encode("Man", 3);
+	// base64_encode("Ma", 2);
+	// base64_encode("M", 1);
+	// base64_encode("light work.", 11);
+	// base64_encode("light work", 10);
+
+	// base64_decode("TWFu", 4);
+	// base64_decode("TWE=", 4);
+	// base64_decode("TQ==", 4);
+	base64_decode("bGlnaHQgdw==", 12);
 
 	if (argc == 1) {
 		printf("usage: ft_ssl command [command opts] [command args]\n");
@@ -22,7 +27,7 @@ int main(int argc, char **argv)
 
 	} else {
 		printf("ft_ssl: Error: '%s' is an invalid command.\n", argv[1]);
-		printf("Standard commands:\ngenrsa\nrsa\nrsautil\n");
+		printf("Standard commands:\n\tgenrsa\n\trsa\n\trsautil\n");
 		return 1;
 	}
 

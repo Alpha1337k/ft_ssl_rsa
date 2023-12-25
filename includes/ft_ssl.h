@@ -10,6 +10,7 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <assert.h>
 
 typedef uint64_t uint64_t;
 
@@ -43,5 +44,6 @@ uint64_t gcd(uint64_t a, uint64_t b);
 uint64_t lcm(uint64_t a, uint64_t b);
 
 uint8_t *base64_encode(uint8_t *bytes, size_t len);
+uint8_t *base64_decode(uint8_t *bytes, size_t len);
 
 #endif
