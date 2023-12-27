@@ -21,7 +21,17 @@ typedef struct genrsa_options_s
 
 typedef struct rsa_options_s
 {
+	char *inform;
+	char *outform;
+	int in_fd;
 	int out_fd;
+	int passin_fd;
+	uint8_t des;
+	uint8_t text;
+	uint8_t no_out;
+	uint8_t modulus;
+	uint8_t pub_in;
+	uint8_t pub_out;
 } rsa_options_t;
 
 typedef struct rsautl_options_s
