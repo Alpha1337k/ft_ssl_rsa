@@ -7,7 +7,7 @@ uint64_t modInverse(uint64_t A, uint64_t M)
             return X; 
 }
 
-int gcdExtended(int a, int b, int* x, int* y)
+long gcdExtended(long a, long b, long* x, long* y)
 {
     // Base Case
     if (a == 0) {
@@ -16,8 +16,8 @@ int gcdExtended(int a, int b, int* x, int* y)
         return b;
     }
  
-    int x1, y1; // To store results of recursive call
-    int gcd = gcdExtended(b % a, a, &x1, &y1);
+    long x1, y1; // To store results of recursive call
+    long gcd = gcdExtended(b % a, a, &x1, &y1);
  
     // Update x and y using results of recursive
     // call
@@ -25,6 +25,50 @@ int gcdExtended(int a, int b, int* x, int* y)
     *y = x1;
  
     return gcd;
+}
+
+long mut_inv(long e, long mod)
+{
+	long t = 0, nT = 1, r = mod, nR = e, q = 0, lT = 0, lR = 0;
+
+	while (nR != 0)
+	{
+		q = r / nR;
+		lT = t;
+		lR = r;
+		t = nT;
+		r = nR;
+
+		nT = lT - q * nT;
+		nR = lR - q * nR;
+	}
+
+	if (r != 1) {
+		printf("ft_ssl: error: inv_mul: not coprime.\n");
+	}
+	if (t < 0) {
+		t += mod;
+	}
+
+	return t;
+}
+
+uint32_t get_prime(int rand_fd) {
+	uint32_t fetched = 0;
+	while (1)
+	{
+		if (read(rand_fd, &fetched, sizeof(uint32_t)) == -1) {
+			printf("ft_ssl: error: Failed to get random bytes\n");
+			exit(1);
+		}
+		if (is_prime(fetched)) {
+			return fetched;
+			printf("+++++\n");
+		} else {
+			printf(".");
+		}
+	}
+	return 0;
 }
 
 int handle_genrsa(genrsa_options_t options)
@@ -35,37 +79,32 @@ int handle_genrsa(genrsa_options_t options)
 		exit(1);
 	}
 
-	uint64_t fetched = 0;
+	uint64_t modulus;
 
 	uint32_t primes[2] = {61, 53};
-	int prime_idx = 0;
-	while (prime_idx < 2)
+	while (1)
 	{
-		if (read(rand_fd, &fetched, sizeof(uint32_t)) == -1) {
-			printf("ft_ssl: error: Failed to get random bytes\n");
-			exit(1);
-		}
-		if (is_prime(fetched)) {
-			primes[prime_idx++] = fetched;
-			printf("+++++\n");
-		} else {
-			printf(".");
+		primes[0] = get_prime(rand_fd);
+		primes[1] = get_prime(rand_fd);
+
+		modulus = (uint64_t)primes[0] * (uint64_t)primes[1];
+
+		if (modulus >> 60) {
+			break;
 		}
 	}
-
-	uint64_t modulus = primes[0] * primes[1];
-	printf("M:%lu\tP1:%u\tP2:%u\n", modulus, primes[0], primes[1]);
-	printf("gcd: %lu\n", gcd(primes[0], primes[1]));
+	printf("\nM:%lu\tP1:%u\tP2:%u\n", modulus, primes[0], primes[1]);
+	// printf("gcd: %lu\n", gcd(primes[0], primes[1]));
 
 	uint64_t l = lcm(primes[0] - 1, primes[1] - 1);
 
 	printf("lcm: %lu\n", l);
 
-	uint64_t e = 17;
-	int x, y;
+	uint64_t e = 0x10001;
+	long x, y;
 
-	uint64_t d = gcdExtended(e, l, &x, &y);
+	int64_t d = mut_inv(e, l);
 
-	printf("E %lu\tD %lu\n", e, d);
-	printf("X %d\tY %d\n", x, y);
+	printf("E: %lu D: %ld\n", e, d);
+
 }

@@ -39,6 +39,17 @@ typedef struct rsautl_options_s
 	int out_fd;
 } rsautl_options_t;
 
+typedef struct rsa_s
+{
+	uint64_t modulus;
+	uint64_t pub_exponent;
+	uint64_t priv_exponent;
+	uint32_t primes[2];
+	uint32_t exponents[2];
+	uint32_t coefficient;
+} rsa_t;
+
+
 
 rsa_options_t parse_rsa(int argc, char **argv);
 genrsa_options_t parse_genrsa(int argc, char **argv);
@@ -55,5 +66,7 @@ uint64_t lcm(uint64_t a, uint64_t b);
 
 uint8_t *base64_encode(uint8_t *bytes, size_t len);
 uint8_t *base64_decode(uint8_t *bytes, size_t len);
+
+rsa_t	asn_decode_rsa(uint8_t *stream);
 
 #endif
