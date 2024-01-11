@@ -13,15 +13,14 @@ uint64_t asn_decode_varint(uint8_t *stream, size_t *iter)
 
 
 
-	assert(len < 8);
+	assert(len <= 8);
 
 	uint64_t rv = 0;
 
 	for (size_t i = 0; i < len; i++)
 	{
-		rv <<= 8;
 		uint8_t new = *((uint8_t *)&stream[*iter]);
-		rv |= new;
+		rv |= ((uint64_t)new << (8 * i));
 		*(iter) += 1;
 	}
 

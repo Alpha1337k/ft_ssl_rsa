@@ -118,7 +118,7 @@ int handle_genrsa(genrsa_options_t options)
 
 	write(options.out_fd, "-----BEGIN RSA PRIVATE KEY-----\n", 32);
 	write(options.out_fd, base64_encoded, strlen(base64_encoded));
-	write(options.out_fd, "\n-----END RSA PRIVATE KEY-----\n", 32);
+	write(options.out_fd, "\n-----END RSA PRIVATE KEY-----\n", 31);
 
 	return 0;
 }
