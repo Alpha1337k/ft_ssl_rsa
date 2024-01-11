@@ -79,32 +79,46 @@ int handle_genrsa(genrsa_options_t options)
 		exit(1);
 	}
 
-	uint64_t modulus;
+	rsa_t rsa;
 
-	uint32_t primes[2] = {61, 53};
 	while (1)
 	{
-		primes[0] = get_prime(rand_fd);
-		primes[1] = get_prime(rand_fd);
+		rsa.primes[0] = get_prime(rand_fd);
+		rsa.primes[1] = get_prime(rand_fd);
 
-		modulus = (uint64_t)primes[0] * (uint64_t)primes[1];
+		rsa.modulus = (uint64_t)rsa.primes[0] * (uint64_t)rsa.primes[1];
 
-		if (modulus >> 60) {
+		if (rsa.modulus >> 60) {
 			break;
 		}
 	}
-	printf("\nM:%lu\tP1:%u\tP2:%u\n", modulus, primes[0], primes[1]);
+	printf("\nM:%lu\tP1:%u\tP2:%u\n", rsa.modulus, rsa.primes[0], rsa.primes[1]);
 	// printf("gcd: %lu\n", gcd(primes[0], primes[1]));
 
-	uint64_t l = lcm(primes[0] - 1, primes[1] - 1);
+	rsa.modulus = lcm(rsa.primes[0] - 1, rsa.primes[1] - 1);
 
-	printf("lcm: %lu\n", l);
+	printf("lcm: %lu\n", rsa.modulus);
 
-	uint64_t e = 0x10001;
-	long x, y;
+	rsa.pub_exponent = 0x10001;
 
-	int64_t d = mut_inv(e, l);
+	rsa.priv_exponent = mut_inv(rsa.pub_exponent, rsa.modulus);
 
-	printf("E: %lu D: %ld\n", e, d);
+	rsa.exponents[0] = rsa.priv_exponent % (rsa.primes[0] - 1);
+	rsa.exponents[1] = rsa.priv_exponent % (rsa.primes[1] - 1);
 
+	rsa.coefficient = mut_inv(rsa.primes[1], rsa.primes[0]);
+
+	printf("E: %lu D: %ld\n", rsa.pub_exponent, rsa.priv_exponent);
+	printf("EXP: '%u' '%u'\n", rsa.exponents[0], rsa.exponents[1]);
+	printf("COE: %d\n", rsa.coefficient);
+
+	uint8_t *asn_encoded = asn_encode_rsa(rsa);
+
+	uint8_t	*base64_encoded = base64_encode(asn_encoded, 67);
+
+	write(options.out_fd, "-----BEGIN RSA PRIVATE KEY-----\n", 32);
+	write(options.out_fd, base64_encoded, strlen(base64_encoded));
+	write(options.out_fd, "\n-----END RSA PRIVATE KEY-----\n", 32);
+
+	return 0;
 }
