@@ -1,10 +1,12 @@
 #include <ft_ssl.h>
 
-long memstrchr(uint8_t *bytes, size_t bytes_len, char *str)
+long memstrchr(uint8_t *bytes, long bytes_len, char *str)
 {
 	size_t str_len = strlen(str);
 
-	for (size_t i = 0; i < bytes_len - str_len; i++)
+	if (!bytes || (long)(bytes_len - str_len + 1) < 0) return -1;
+
+	for (int i = 0; i < bytes_len - str_len + 1; i++)
 	{
 		if (memcmp(&bytes[i], str, str_len) == 0) {
 			return i;
@@ -22,7 +24,7 @@ long memstrchr(uint8_t *bytes, size_t bytes_len, char *str)
 uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx)
 {
 	int status = 0;
-	uint8_t buf[512];
+	uint8_t buf[513];
 	uint8_t *rv = 0;
 	size_t rv_len = 0;
 
@@ -31,9 +33,14 @@ uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx)
 	do
 	{
 		status = read(fd, &buf, 512);
-		if (status > 0) {
-			size_t new_len = rv_len += status;
+
+		if (status >= 0) {
+			size_t new_len = rv_len + status;
 			uint8_t *new_rv = malloc(new_len);
+			if (!new_rv) {
+				printf("ft_ssl: Error: malloc fail\n");
+				exit(1);
+			}
 
 			if (rv) {
 				memcpy(new_rv, rv, rv_len);
@@ -43,6 +50,7 @@ uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx)
 				rv = new_rv;
 			} else {
 				memcpy(new_rv, buf, status);
+				rv_len = new_len;
 				rv = new_rv;
 			}
 		}
@@ -65,7 +73,7 @@ uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx)
 	} while (status > 0 && state != 3);
 
 	if (state != (PRIVATE_START_FOUND | PRIVATE_END_FOUND)) {
-		printf("ft_ssl: Error: start and end not found. (%d)\n", state);
+		printf("ft_ssl: Error: start and end not found. (%d, %d)\n", state, status);
 		exit(1);
 	}
 
@@ -99,5 +107,8 @@ int handle_rsa(rsa_options_t options)
 		pkey.exponents[1],
 		pkey.coefficient
 	);
+
+	free(pkey_raw);
+	free(pkey_decoded);
 
 }

@@ -32,6 +32,7 @@ void assert_len(char *name, size_t i, size_t len)
 rsa_options_t parse_rsa(int argc, char **argv) {
 	rsa_options_t rv;
 
+	rv.in_fd = STDIN_FILENO;
 	rv.out_fd = STDOUT_FILENO;
 	for (int i = 0; i < argc; i++)
 	{
