@@ -32,6 +32,8 @@ void assert_len(char *name, size_t i, size_t len)
 rsa_options_t parse_rsa(int argc, char **argv) {
 	rsa_options_t rv;
 
+	bzero(&rv, sizeof(rv));
+
 	rv.in_fd = STDIN_FILENO;
 	rv.out_fd = STDOUT_FILENO;
 	for (int i = 0; i < argc; i++)
@@ -76,6 +78,8 @@ rsa_options_t parse_rsa(int argc, char **argv) {
 			rv.pub_in = 1;
 		} else if (strcmp(argv[i], "-pubout") == 0) {
 			rv.pub_out = 1;
+		} else if (strcmp(argv[i], "-check") == 0) {
+			rv.check = 1;
 		}
 	}
 	

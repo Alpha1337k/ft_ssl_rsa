@@ -87,28 +87,39 @@ int handle_rsa(rsa_options_t options)
 	long start = 0, end = 0;
 	uint8_t *pkey_raw = read_pkey(options.in_fd, &raw_len, &start, &end);
 
-	for (size_t i = start; i < end; i++)
-	{
-		printf("%c", pkey_raw[i]);
-	}
-	printf("$\n");
-
 	uint8_t *pkey_decoded = base64_decode(&pkey_raw[start], end - start);
 
 	rsa_t pkey = asn_decode_rsa(pkey_decoded);
 
-	printf("modulus:%lu\npublicExponent:%lu\nprivateExponent:%lu\nprime1:%u\nprime2:%u\nexponent1:%u\nexponent2:%u\ncoeffecient:%d\n",
-		pkey.modulus,
-		pkey.pub_exponent,
-		pkey.priv_exponent,
-		pkey.primes[0],
-		pkey.primes[1],
-		pkey.exponents[0],
-		pkey.exponents[1],
-		pkey.coefficient
-	);
+
+	if (options.modulus) {
+		printf("Modulus=%lX\n", pkey.modulus);
+	}
+
+	if (options.check) {
+		printf("RSA key ok\n");
+	}
+
+	if (options.text) {
+		printf("RSA Private-Key: (64 bit, 2 primes) %d\n", options.text);
+		printf("modulus:%lu\npublicExponent:%lu\nprivateExponent:%lu\nprime1:%u\nprime2:%u\nexponent1:%u\nexponent2:%u\ncoeffecient:%d\n",
+			pkey.modulus,
+			pkey.pub_exponent,
+			pkey.priv_exponent,
+			pkey.primes[0],
+			pkey.primes[1],
+			pkey.exponents[0],
+			pkey.exponents[1],
+			pkey.coefficient
+		);
+	}
 
 	free(pkey_raw);
 	free(pkey_decoded);
 
+	if (options.no_out == 0) {
+		fprintf(stderr, "writing RSA key\n");
+		print_rsa_private(options.out_fd, pkey);
+
+	}
 }

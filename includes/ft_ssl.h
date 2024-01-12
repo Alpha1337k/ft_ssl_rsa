@@ -27,6 +27,7 @@ typedef struct rsa_options_s
 	int out_fd;
 	int passin_fd;
 	uint8_t des;
+	uint8_t check;
 	uint8_t text;
 	uint8_t no_out;
 	uint8_t modulus;
@@ -69,5 +70,7 @@ uint8_t *base64_decode(uint8_t *bytes, size_t len);
 
 rsa_t	asn_decode_rsa(uint8_t *stream);
 uint8_t	*asn_encode_rsa(rsa_t rsa);
+
+void	print_rsa_private(int fd, rsa_t rsa);
 
 #endif
