@@ -15,18 +15,53 @@ int asserted_open(char *file, int flags, int perms) {
 	return fd;
 }
 
-rsautl_options_t parse_rsautl(int argc, char **argv) {
-	rsautl_options_t rv;
-
-	return rv;
-}
-
 void assert_len(char *name, size_t i, size_t len) 
 {
 	if (i + 1 >= len) {
 		printf("ft_ssl: Error: too few arguments for -out\n");
 		exit(1);
 	}
+}
+
+rsautl_options_t parse_rsautl(int argc, char **argv) {
+	rsautl_options_t rv;
+
+	bzero(&rv, sizeof(rv));
+
+	rv.in_fd = STDIN_FILENO;
+	rv.out_fd = STDOUT_FILENO;
+	rv.task = unknown;
+	for (int i = 0; i < argc; i++)
+	{
+		if (strcmp(argv[i], "-in") == 0) {
+			assert_len("-in", i, argc);
+			rv.in_fd = asserted_open(argv[i + 1], O_RDONLY, 0644);
+		} else if (strcmp(argv[i], "-out") == 0) {
+			assert_len("-out", i, argc);
+			rv.out_fd = asserted_open(argv[i + 1], O_CREAT | O_TRUNC | O_WRONLY, 0644);
+		} else if (strcmp(argv[i], "-inkey") == 0) {
+			assert_len("-inkey", i, argc);
+			rv.in_key = asserted_open(argv[i + 1], O_RDONLY, 0644);
+		} else if (strcmp(argv[i], "-encrypt") == 0) {
+			rv.task = ENCRYPT;
+		} else if (strcmp(argv[i], "-decrypt") == 0) {
+			rv.task = DECRYPT;
+		} else if (strcmp(argv[i], "-hexdump") == 0) {
+			rv.hexdump = 1;
+		}
+	}
+
+	if (rv.in_key == 0) {
+		printf("ft_ssl: Error: no key provided\n");
+		exit(1);
+	}
+
+	if (rv.task == unknown) {
+		printf("ft_ssl: Error: no task provided\n");
+		exit(1);
+	}
+
+	return rv;
 }
 
 rsa_options_t parse_rsa(int argc, char **argv) {

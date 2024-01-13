@@ -88,20 +88,20 @@ int handle_genrsa(genrsa_options_t options)
 
 		rsa.modulus = (uint64_t)rsa.primes[0] * (uint64_t)rsa.primes[1];
 
-		if (rsa.modulus >> 60) {
+		if (rsa.modulus >> 63) {
 			break;
 		}
 	}
 	printf("\nM:%lu\tP1:%u\tP2:%u\n", rsa.modulus, rsa.primes[0], rsa.primes[1]);
 	// printf("gcd: %lu\n", gcd(primes[0], primes[1]));
 
-	rsa.modulus = lcm(rsa.primes[0] - 1, rsa.primes[1] - 1);
+	uint64_t ltf = lcm(rsa.primes[0] - 1, rsa.primes[1] - 1);
 
-	printf("lcm: %lu\n", rsa.modulus);
+	printf("mod: %lu, lcm: %lu\n", rsa.modulus, ltf);
 
 	rsa.pub_exponent = 0x10001;
 
-	rsa.priv_exponent = mut_inv(rsa.pub_exponent, rsa.modulus);
+	rsa.priv_exponent = mut_inv(rsa.pub_exponent, ltf);
 
 	rsa.exponents[0] = rsa.priv_exponent % (rsa.primes[0] - 1);
 	rsa.exponents[1] = rsa.priv_exponent % (rsa.primes[1] - 1);

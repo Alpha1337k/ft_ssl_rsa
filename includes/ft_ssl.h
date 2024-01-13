@@ -35,9 +35,20 @@ typedef struct rsa_options_s
 	uint8_t pub_out;
 } rsa_options_t;
 
+typedef enum rsault_command_s {
+	unknown = -1,
+	ENCRYPT,
+	DECRYPT
+} rsault_command_t;
+
 typedef struct rsautl_options_s
 {
 	int out_fd;
+	int in_fd;
+	int in_key;
+	int is_pubkey;
+	int hexdump;
+	rsault_command_t task;
 } rsautl_options_t;
 
 typedef struct rsa_s
@@ -72,5 +83,6 @@ rsa_t	asn_decode_rsa(uint8_t *stream);
 uint8_t	*asn_encode_rsa(rsa_t rsa);
 
 void	print_rsa_private(int fd, rsa_t rsa);
+uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx);
 
 #endif
