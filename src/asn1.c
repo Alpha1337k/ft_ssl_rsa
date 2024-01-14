@@ -46,10 +46,10 @@ uint16_t asn_decode_sequence(uint8_t *stream, size_t *iter)
 }
 
 
-rsa_t	asn_decode_rsa(uint8_t *stream)
+priv_rsa_t	asn_decode_priv_rsa(uint8_t *stream)
 {
 	size_t iter = 0;
-	rsa_t rv;
+	priv_rsa_t rv;
 
 	uint16_t seq_len = asn_decode_sequence(stream, &iter);
 	uint64_t version = asn_decode_varint(stream, &iter);
@@ -64,6 +64,19 @@ rsa_t	asn_decode_rsa(uint8_t *stream)
 	rv.exponents[0] = asn_decode_varint(stream, &iter);
 	rv.exponents[1] = asn_decode_varint(stream, &iter);
 	rv.coefficient = asn_decode_varint(stream, &iter);
+
+	return rv;
+}
+
+pub_rsa_t	asn_decode_pub_rsa(uint8_t *stream)
+{
+	size_t iter = 0;
+	pub_rsa_t rv;
+
+	stream += 22;
+
+	rv.modulus = asn_decode_varint(stream, &iter);
+	rv.pub_exponent = asn_decode_varint(stream, &iter);
 
 	return rv;
 }
@@ -88,7 +101,7 @@ size_t	asn_write_int(uint8_t *buf, int val)
 	return 6;
 }
 
-uint8_t	*asn_encode_rsa(rsa_t rsa)
+uint8_t	*asn_encode_priv_rsa(priv_rsa_t rsa)
 {
 	uint8_t *buf = malloc(67);
 	if (!buf) return 0;
@@ -107,6 +120,21 @@ uint8_t	*asn_encode_rsa(rsa_t rsa)
 	buf_idx += asn_write_int(&buf[buf_idx], rsa.exponents[1]);
 	buf_idx += asn_write_int(&buf[buf_idx], rsa.coefficient);
 
+	return buf;
+}
+
+uint8_t	*asn_encode_pub_rsa(pub_rsa_t rsa)
+{
+	uint8_t *buf = malloc(44);
+	if (!buf) return 0;
+
+	uint8_t header[] = {0x30, 0x5c, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, 0x4b, 0x00, 0x30, 0x48};
+
+	memcpy(buf, header, sizeof(header));
+	size_t buf_idx = sizeof(header);
+
+	buf_idx += asn_write_long(&buf[buf_idx], rsa.modulus);
+	buf_idx += asn_write_long(&buf[buf_idx], rsa.pub_exponent);
 
 	return buf;
 }

@@ -42,7 +42,7 @@ size_t			mod_pow(size_t value, size_t exponent, size_t mod)
 	return ((size_t)result);
 }
 
-uint8_t *decrypt(rsa_t key, uint64_t *bytes, size_t len)
+uint8_t *decrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
 {
 	uint64_t *rv = malloc(sizeof(uint64_t) * (len / 8));
 	if (!rv) {
@@ -59,7 +59,7 @@ uint8_t *decrypt(rsa_t key, uint64_t *bytes, size_t len)
 	return (uint8_t *)rv;
 }
 
-uint64_t *encrypt(rsa_t key, uint64_t *bytes, size_t len)
+uint64_t *encrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
 {
 	uint64_t *rv = malloc(sizeof(uint64_t) * (len / 8));
 	if (!rv) {
@@ -121,13 +121,17 @@ uint8_t *read_input(int fd, size_t *len)
 
 int handle_rsautl(rsautl_options_t options)
 {
-	size_t raw_len = 0;
 	long start = 0, end = 0;
-	uint8_t *pkey_raw = read_pkey(options.in_key, &raw_len, &start, &end);
+	uint8_t *pkey_raw = read_key(options.in_key, 
+		&start, 
+		&end,
+		PRIVATE_START,
+		PRIVATE_END
+	);
 
 	uint8_t *pkey_decoded = base64_decode(&pkey_raw[start], end - start);
 
-	rsa_t pkey = asn_decode_rsa(pkey_decoded);
+	priv_rsa_t pkey = asn_decode_priv_rsa(pkey_decoded);
 
 	size_t in_len = 0;
 	uint8_t *in = read_input(options.in_fd, &in_len);

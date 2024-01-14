@@ -97,7 +97,7 @@ rsa_options_t parse_rsa(int argc, char **argv) {
 			rv.passin_fd = asserted_open(argv[i + 1], O_RDONLY, 0644);
 		} else if (strcmp(argv[i], "-out") == 0) {
 			assert_len("-out", i, argc);
-			rv.out_fd = asserted_open(argv[i + 1], O_RDONLY, 0644);
+			rv.out_fd = asserted_open(argv[i + 1], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 		} else if (strcmp(argv[i], "-passout") == 0) {
 			assert_len("-passout", i, argc);
 			rv.in_fd = asserted_open(argv[i + 1], O_CREAT | O_RDWR | O_TRUNC, 0644);

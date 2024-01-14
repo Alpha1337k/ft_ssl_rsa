@@ -15,13 +15,17 @@ long memstrchr(uint8_t *bytes, long bytes_len, char *str)
 	return -1;
 }
 
-#define START_FOUND 0
-#define PRIVATE_START_FOUND 1
-#define PRIVATE_END_FOUND 2
-#define PRIVATE_START "-----BEGIN RSA PRIVATE KEY-----\n"
-#define PRIVATE_END "\n-----END RSA PRIVATE KEY-----"
+#define START_FOUND 1
+#define END_FOUND 2
 
-uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx)
+
+uint8_t *read_key(
+	int fd, 
+	long *start_idx,
+	long *end_idx,
+	char *start_str,
+	char *end_str
+	)
 {
 	int status = 0;
 	uint8_t buf[513];
@@ -54,43 +58,59 @@ uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx)
 				rv = new_rv;
 			}
 		}
-		*len = rv_len;
 
-		if ((state & PRIVATE_START_FOUND) == 0) {
-			start_idx[0] = memstrchr(rv, rv_len, PRIVATE_START);
+		if ((state & START_FOUND) == 0) {
+			start_idx[0] = memstrchr(rv, rv_len, start_str);
 			if (*start_idx != -1) {
-				(*start_idx) += sizeof(PRIVATE_START) - 1;
-				state |= PRIVATE_START_FOUND;
+				(*start_idx) += strlen(start_str);
+				state |= START_FOUND;
 			}
 		}
 		if (state == 1) {
-			end_idx[0] = memstrchr(rv, rv_len, PRIVATE_END);
+			end_idx[0] = memstrchr(rv, rv_len, end_str);
 			if (*end_idx != -1) {
-				state |= PRIVATE_END_FOUND;
+				state |= END_FOUND;
 			}
 		}
 
 	} while (status > 0 && state != 3);
 
-	if (state != (PRIVATE_START_FOUND | PRIVATE_END_FOUND)) {
-		printf("ft_ssl: Error: start and end not found. (%d, %d)\n", state, status);
+	if (state != (START_FOUND | END_FOUND)) {
+		printf("ft_ssl: Error: invalid key. (%d, %d)\n", state, status);
 		exit(1);
 	}
 
 	return rv;	
 }
 
-
-int handle_rsa(rsa_options_t options)
+int handle_private_key(rsa_options_t options)
 {
-	size_t raw_len = 0;
 	long start = 0, end = 0;
-	uint8_t *pkey_raw = read_pkey(options.in_fd, &raw_len, &start, &end);
 
-	uint8_t *pkey_decoded = base64_decode(&pkey_raw[start], end - start);
+	uint8_t *key_raw = read_key(
+		options.in_fd, 
+		&start, 
+		&end,
+		PRIVATE_START,
+		PRIVATE_END
+		);
+	uint8_t *key_decoded = base64_decode(&key_raw[start], end - start);
 
-	rsa_t pkey = asn_decode_rsa(pkey_decoded);
+	priv_rsa_t pkey = asn_decode_priv_rsa(key_decoded);
 
+
+	if (options.no_out == 0) {
+		fprintf(stderr, "writing RSA key\n");
+		if (options.pub_out) {
+			pub_rsa_t pub;
+			pub.modulus = pkey.modulus;
+			pub.pub_exponent = pkey.pub_exponent;
+
+			print_rsa_public(options.out_fd, pub);
+		} else {
+			print_rsa_private(options.out_fd, pkey);
+		}
+	}
 
 	if (options.modulus) {
 		printf("Modulus=%lX\n", pkey.modulus);
@@ -114,12 +134,58 @@ int handle_rsa(rsa_options_t options)
 		);
 	}
 
-	free(pkey_raw);
-	free(pkey_decoded);
+	free(key_raw);
+	free(key_decoded);
+}
+
+int handle_public_key(rsa_options_t options)
+{
+	size_t raw_len = 0;
+	long start = 0, end = 0;
+
+	uint8_t *key_raw = read_key(
+		options.in_fd, 
+		&start, 
+		&end,
+		PUBLIC_START,
+		PUBLIC_END
+		);
+
+	uint8_t *key_decoded = base64_decode(&key_raw[start], end - start);
+
+	pub_rsa_t pkey = asn_decode_pub_rsa(key_decoded);
+
+	if (options.modulus) {
+		printf("Modulus=%lX\n", pkey.modulus);
+	}
+
+	if (options.check) {
+		printf("RSA key ok\n");
+	}
+
+	if (options.text) {
+		printf("RSA Private-Key: (64 bit)\n");
+		printf("modulus:%lu\npublicExponent:%lu\n",
+			pkey.modulus,
+			pkey.pub_exponent
+		);
+	}
 
 	if (options.no_out == 0) {
 		fprintf(stderr, "writing RSA key\n");
-		print_rsa_private(options.out_fd, pkey);
+		print_rsa_public(options.out_fd, pkey);
+	}
 
+	free(key_raw);
+	free(key_decoded);
+}
+
+
+int handle_rsa(rsa_options_t options)
+{
+	if (options.pub_in) {
+		return handle_public_key(options);
+	} else {
+		return handle_private_key(options);
 	}
 }

@@ -31,13 +31,14 @@ uint8_t decode_base64_val(uint8_t byte)
 	assert(0);
 }
 
-
+#include <math.h>
 uint8_t *base64_encode(uint8_t *bytes, size_t len)
 {
-	size_t encoded_size = len * 1.3333334;
+	size_t encoded_size = ceilf(len * 1.3333333334);
 	encoded_size += len % 4;
 
 	uint8_t *encoded = malloc(sizeof(uint8_t) * encoded_size);
+	memset(encoded, 0, encoded_size);
 
 	size_t encoded_idx = 0;
 
@@ -79,7 +80,7 @@ uint8_t *base64_encode(uint8_t *bytes, size_t len)
 		// printf("\n");
 	}
 
-	while (encoded_idx % 4 != 0)
+	while (encoded_idx % 4 != 0 && encoded_idx % 4 != 4)
 	{
 		encoded[encoded_idx++] = '=';
 	}

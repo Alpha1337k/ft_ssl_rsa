@@ -79,7 +79,7 @@ int handle_genrsa(genrsa_options_t options)
 		exit(1);
 	}
 
-	rsa_t rsa;
+	priv_rsa_t rsa;
 
 	while (1)
 	{

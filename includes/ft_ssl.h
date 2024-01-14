@@ -14,7 +14,10 @@
 #include <assert.h>
 #include <strings.h>
 
-typedef uint64_t uint64_t;
+#define PRIVATE_START "-----BEGIN RSA PRIVATE KEY-----\n"
+#define PRIVATE_END "\n-----END RSA PRIVATE KEY-----"
+#define PUBLIC_START "-----BEGIN PUBLIC KEY-----\n"
+#define PUBLIC_END "\n-----END PUBLIC KEY-----"
 
 typedef struct genrsa_options_s
 {
@@ -53,7 +56,7 @@ typedef struct rsautl_options_s
 	rsault_command_t task;
 } rsautl_options_t;
 
-typedef struct rsa_s
+typedef struct priv_rsa_s
 {
 	uint64_t modulus;
 	uint64_t pub_exponent;
@@ -61,7 +64,13 @@ typedef struct rsa_s
 	uint32_t primes[2];
 	uint32_t exponents[2];
 	int32_t coefficient;
-} rsa_t;
+} priv_rsa_t;
+
+typedef struct pub_rsa_s
+{
+	uint64_t modulus;
+	uint64_t pub_exponent;
+} pub_rsa_t;
 
 
 
@@ -81,11 +90,17 @@ uint64_t lcm(uint64_t a, uint64_t b);
 uint8_t *base64_encode(uint8_t *bytes, size_t len);
 uint8_t *base64_decode(uint8_t *bytes, size_t len);
 
-rsa_t	asn_decode_rsa(uint8_t *stream);
-uint8_t	*asn_encode_rsa(rsa_t rsa);
+priv_rsa_t	asn_decode_rsa(uint8_t *stream);
+uint8_t	*asn_encode_priv_rsa(priv_rsa_t rsa);
+uint8_t	*asn_encode_pub_rsa(pub_rsa_t rsa);
 
-void	print_rsa_private(int fd, rsa_t rsa);
-uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx);
+void	print_rsa_private(int fd, priv_rsa_t rsa);
+void	print_rsa_public(int fd, pub_rsa_t rsa);
+
+uint8_t *read_key(int fd, long *start_idx,long *end_idx,char *start_str,char *end_str);
 void	hexdump(int fd, uint8_t *bytes, size_t len);
+
+priv_rsa_t	asn_decode_priv_rsa(uint8_t *stream);
+pub_rsa_t	asn_decode_pub_rsa(uint8_t *stream);
 
 #endif
