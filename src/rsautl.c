@@ -42,9 +42,6 @@ size_t			mod_pow(size_t value, size_t exponent, size_t mod)
 	return ((size_t)result);
 }
 
-#include <byteswap.h>
-
-
 uint8_t *decrypt(rsa_t key, uint64_t *bytes, size_t len)
 {
 	uint64_t *rv = malloc(sizeof(uint64_t) * (len / 8));
@@ -56,7 +53,7 @@ uint8_t *decrypt(rsa_t key, uint64_t *bytes, size_t len)
 	for (size_t i = 0; i < len / 8; i++)
 	{
 		rv[i] = mod_pow(bytes[i], key.priv_exponent, key.modulus);
-		printf("0x%lx == pow(0x%lx, 0x%lx, 0x%lx)\n", rv[i], bytes[i], key.priv_exponent, key.modulus);
+		// printf("0x%lx == pow(0x%lx, 0x%lx, 0x%lx)\n", rv[i], bytes[i], key.priv_exponent, key.modulus);
 	}
 	
 	return (uint8_t *)rv;
@@ -73,7 +70,7 @@ uint64_t *encrypt(rsa_t key, uint64_t *bytes, size_t len)
 	for (size_t i = 0; i < len / 8; i++)
 	{
 		rv[i] = mod_pow(bytes[i], key.pub_exponent,  key.modulus);
-		printf("0x%lx == pow(0x%lx, 0x%lx, 0x%lx)\n", rv[i], bytes[i], key.pub_exponent, key.modulus);
+		// printf("0x%lx == pow(0x%lx, 0x%lx, 0x%lx)\n", rv[i], bytes[i], key.pub_exponent, key.modulus);
 		assert(bytes[i] < key.modulus);
 	}
 	
@@ -134,9 +131,8 @@ int handle_rsautl(rsautl_options_t options)
 
 	size_t in_len = 0;
 	uint8_t *in = read_input(options.in_fd, &in_len);
-	uint8_t *out = 0;
 
-	printf("LEN: %ld\n", in_len);
+	uint8_t *out = 0;
 
 	if (options.task == ENCRYPT)
 	{
@@ -148,7 +144,11 @@ int handle_rsautl(rsautl_options_t options)
 		out = (uint8_t *)decrypt(pkey, (uint64_t *)in, in_len);
 	}
 
-	write(options.out_fd, out, in_len);
+	if (options.hexdump) {
+		hexdump(options.out_fd, out, in_len);
+	} else {
+		write(options.out_fd, out, in_len);
+	}
 
 	return 0;
 }

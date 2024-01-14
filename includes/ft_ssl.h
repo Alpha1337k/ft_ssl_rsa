@@ -1,6 +1,7 @@
 #ifndef FT_SSL
 #define ft_ssl
 
+#define _POSIX_C_SOURCE  200809L
 #include <stdio.h>
 #include <strings.h>
 #include <string.h>
@@ -11,6 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>
+#include <strings.h>
 
 typedef uint64_t uint64_t;
 
@@ -84,5 +86,6 @@ uint8_t	*asn_encode_rsa(rsa_t rsa);
 
 void	print_rsa_private(int fd, rsa_t rsa);
 uint8_t *read_pkey(int fd, size_t *len, long *start_idx, long *end_idx);
+void	hexdump(int fd, uint8_t *bytes, size_t len);
 
 #endif

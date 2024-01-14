@@ -26,7 +26,7 @@ void assert_len(char *name, size_t i, size_t len)
 rsautl_options_t parse_rsautl(int argc, char **argv) {
 	rsautl_options_t rv;
 
-	bzero(&rv, sizeof(rv));
+	memset(&rv, 0, sizeof(rv));
 
 	rv.in_fd = STDIN_FILENO;
 	rv.out_fd = STDOUT_FILENO;
@@ -67,7 +67,7 @@ rsautl_options_t parse_rsautl(int argc, char **argv) {
 rsa_options_t parse_rsa(int argc, char **argv) {
 	rsa_options_t rv;
 
-	bzero(&rv, sizeof(rv));
+	memset(&rv, 0, sizeof(rv));
 
 	rv.in_fd = STDIN_FILENO;
 	rv.out_fd = STDOUT_FILENO;
