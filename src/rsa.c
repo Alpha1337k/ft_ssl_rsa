@@ -15,6 +15,39 @@ long memstrchr(uint8_t *bytes, long bytes_len, char *str)
 	return -1;
 }
 
+char *get_pass(rsa_options_t options) {
+	char *rv;
+	char buf[1025];
+
+	memset(buf, 0, 1025);
+
+	if (options.passin == 0) {
+		scanf("Enter password: %1024s", buf);
+
+		return strdup(buf);
+	}
+
+	if (strncmp(options.passin, "pass:", 5) == 0) {
+		return strdup(options.passin + 5);
+	} else if (strncmp(options.passin, "env:", 4) == 0) {
+		return strdup(getenv(options.passin + 4));
+	} else if (strncmp(options.passin, "file:", 5) == 0) {
+		
+		int fd = open(options.passin + 5, O_RDONLY);
+		if (fd == -1) {
+			printf("ft_ssl: Error: could not open password\n");
+			exit(1);
+		}
+
+		read(fd, buf, 1024);
+		close(fd);
+
+		return strdup(buf);
+	}
+	printf("ft_ssl: Error: unknown pass option\n");
+	return 0;
+}
+
 #define START_FOUND 1
 #define END_FOUND 2
 

@@ -30,7 +30,7 @@ typedef struct rsa_options_s
 	char *outform;
 	int in_fd;
 	int out_fd;
-	int passin_fd;
+	char *passin;
 	uint8_t des;
 	uint8_t check;
 	uint8_t text;

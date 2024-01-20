@@ -1,10 +1,10 @@
 NAME=ft_ssl
 
 CC=gcc
-FLAGS=
+FLAGS=-g
 # FLAGS=-Wall -Werror -Wextra -Wno-unused-variable
 DEBUG_FLAGS=-g -fsanitize=address
-SRC=src/*.c
+SRC=src/*.c -lm
 LIBS=-I includes
 OBJ=
 RM =rm -rf
