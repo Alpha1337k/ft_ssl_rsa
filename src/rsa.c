@@ -131,26 +131,15 @@ int handle_private_key(rsa_options_t options)
 
 	priv_rsa_t pkey = asn_decode_priv_rsa(key_decoded);
 
-
-	if (options.no_out == 0) {
-		fprintf(stderr, "writing RSA key\n");
-		if (options.pub_out) {
-			pub_rsa_t pub;
-			pub.modulus = pkey.modulus;
-			pub.pub_exponent = pkey.pub_exponent;
-
-			print_rsa_public(options.out_fd, pub);
-		} else {
-			print_rsa_private(options.out_fd, pkey);
-		}
-	}
-
 	if (options.modulus) {
 		printf("Modulus=%lX\n", pkey.modulus);
 	}
 
 	if (options.check) {
-		printf("RSA key ok\n");
+		if ((uint64_t)pkey.primes[0] * (uint64_t)pkey.primes[1] == pkey.modulus)
+			printf("RSA key ok\n");
+		else
+			printf("RSA Key error: n does not equal p q\n");
 	}
 
 	if (options.text) {
@@ -165,6 +154,19 @@ int handle_private_key(rsa_options_t options)
 			pkey.exponents[1],
 			pkey.coefficient
 		);
+	}
+
+	if (options.no_out == 0) {
+		fprintf(stderr, "writing RSA key\n");
+		if (options.pub_out) {
+			pub_rsa_t pub;
+			pub.modulus = pkey.modulus;
+			pub.pub_exponent = pkey.pub_exponent;
+
+			print_rsa_public(options.out_fd, pub);
+		} else {
+			print_rsa_private(options.out_fd, pkey);
+		}
 	}
 
 	free(key_raw);
