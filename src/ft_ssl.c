@@ -13,6 +13,9 @@ int main(int argc, char **argv)
 	// base64_decode("TQ==", 4);
 	// base64_decode("bGlnaHQgdw==", 12);
 
+	des_encrypt(0, "Hello", 0);
+	return 0;
+
 	if (argc == 1) {
 		printf("usage: ft_ssl command [command opts] [command args]\n");
 		return 1;
