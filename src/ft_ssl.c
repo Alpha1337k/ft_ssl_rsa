@@ -13,7 +13,9 @@ int main(int argc, char **argv)
 	// base64_decode("TQ==", 4);
 	// base64_decode("bGlnaHQgdw==", 12);
 
-	des_encrypt(0, "Hello", 0);
+	uint64_t bits = 0x123456ABCD132536;
+
+	des_encrypt((uint64_t *)&bits, "", 1);
 	return 0;
 
 	if (argc == 1) {
