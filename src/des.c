@@ -150,14 +150,6 @@ uint64_t left_rotate(uint64_t val, size_t count, size_t len)
 {
 	uint64_t mask = ((1l << len) - 1);
 
-	// printf("%lX %lX %lX %lX\n", 
-	// 	mask,
-	// 	(val << count), 
-	// 	(val >> (len - count), 
-	// 	((val << count) | (val >> (len - count)))),
-	// 	(((val << count) | (val >> (len - count))) & mask)
-	// );
-
 	return ((val << count) | (val >> (len - count))) & mask;
 }
 
@@ -172,20 +164,17 @@ void print_pos(uint64_t v)
 
 uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 {
-	key = "\xDD\xCC\x36\x27\x18\x09\xBB\xAA";
-
-	uint64_t key_long = ((uint64_t *)key)[0];
-	uint64_t hashed_key = permute_64(key_long, 64, keyp, 56);
+	uint64_t hashed_key = hash_key(key);
+	uint64_t hashed_key_compressed = permute_64(hashed_key, 64, keyp, 56);
 
 
-	print_pos(hashed_key);
 
-	printf("Hashed key: 0x%lX KL: 0x%lX\n", hashed_key, key_long);
+	printf("Hashed key: 0x%lX KL: 0x%lX\n", hashed_key_compressed, hashed_key);
 
 	uint64_t keys[16];
 
-	uint64_t key_left = (hashed_key >> 28) & 0xFFFFFFF;
-	uint64_t key_right = hashed_key & 0xFFFFFFF;
+	uint64_t key_left = (hashed_key_compressed >> 28) & 0xFFFFFFF;
+	uint64_t key_right = hashed_key_compressed & 0xFFFFFFF;
 
 	for (size_t i = 0; i < 16; i++)
 	{
@@ -248,7 +237,7 @@ uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 
 			chunk_left = tmp;
 
-			printf("Round %ld L:0x%X R:0x%X\n", n, chunk_left, chunk_right);
+			printf("Round %ld L:0x%X R:0x%lX\n", n, chunk_left, chunk_right);
 			
 		}
 		

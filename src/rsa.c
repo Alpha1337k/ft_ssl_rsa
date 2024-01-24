@@ -15,25 +15,27 @@ long memstrchr(uint8_t *bytes, long bytes_len, char *str)
 	return -1;
 }
 
-char *get_pass(rsa_options_t options) {
+char *get_pass(char *pass_cmd, char *prompt)
+{
 	char *rv;
 	char buf[1025];
 
 	memset(buf, 0, 1025);
 
-	if (options.passin == 0) {
-		scanf("Enter password: %1024s", buf);
+	if (strncmp(pass_cmd, "stdin", 4) == 0) {
+		printf("%s: ", prompt);
+		fflush(stdout);
+		if (scanf("%1024s", buf) == 0) {
+			printf("ft_ssl: error: password not provided");
+		}
 
 		return strdup(buf);
-	}
-
-	if (strncmp(options.passin, "pass:", 5) == 0) {
-		return strdup(options.passin + 5);
-	} else if (strncmp(options.passin, "env:", 4) == 0) {
-		return strdup(getenv(options.passin + 4));
-	} else if (strncmp(options.passin, "file:", 5) == 0) {
-		
-		int fd = open(options.passin + 5, O_RDONLY);
+	} else if (strncmp(pass_cmd, "pass:", 5) == 0) {
+		return strdup(pass_cmd + 5);
+	} else if (strncmp(pass_cmd, "env:", 4) == 0) {
+		return strdup(getenv(pass_cmd + 4));
+	} else if (strncmp(pass_cmd, "file:", 5) == 0) {
+		int fd = open(pass_cmd + 5, O_RDONLY);
 		if (fd == -1) {
 			printf("ft_ssl: Error: could not open password\n");
 			exit(1);
@@ -45,6 +47,7 @@ char *get_pass(rsa_options_t options) {
 		return strdup(buf);
 	}
 	printf("ft_ssl: Error: unknown pass option\n");
+	exit(1);
 	return 0;
 }
 
@@ -113,6 +116,12 @@ uint8_t *read_key(
 		exit(1);
 	}
 
+	long enc_idx = memstrchr(rv, rv_len, ENCRYPT_INFO);
+	if (enc_idx != -1) {
+		start_idx[0] += sizeof(ENCRYPT_INFO) - 1;
+	}
+
+
 	return rv;	
 }
 
@@ -126,8 +135,25 @@ int handle_private_key(rsa_options_t options)
 		&end,
 		PRIVATE_START,
 		PRIVATE_END
-		);
+	);
+
 	uint8_t *key_decoded = base64_decode(&key_raw[start], end - start);
+
+	char *pass = 0;
+
+	if (options.passin)
+	{
+		pass = get_pass(options.passin, "Enter passin");
+		key_decoded = des((uint64_t *)key_decoded, pass, 9, 1);
+	}
+
+	uint64_t *key_long = (uint64_t *)key_decoded;
+
+	for (size_t i = 0; i < 9; i++)
+	{
+		printf("0x%lx ", key_long[i]);
+	}
+	printf("\n");
 
 	priv_rsa_t pkey = asn_decode_priv_rsa(key_decoded);
 
@@ -165,7 +191,7 @@ int handle_private_key(rsa_options_t options)
 
 			print_rsa_public(options.out_fd, pub);
 		} else {
-			print_rsa_private(options.out_fd, pkey);
+			print_rsa_private(options.out_fd, pkey, options.passout);
 		}
 	}
 

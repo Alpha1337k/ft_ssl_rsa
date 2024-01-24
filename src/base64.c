@@ -103,7 +103,7 @@ void print_decoded(uint8_t *decoded, size_t len)
 
 uint8_t *base64_decode(uint8_t *bytes, size_t len)
 {
-	uint8_t *decoded = malloc(sizeof(uint8_t) * len / 1.33333334);
+	uint8_t *decoded = malloc(sizeof(uint8_t) * len / 1);
 
 	size_t encoded_idx = 0;
 

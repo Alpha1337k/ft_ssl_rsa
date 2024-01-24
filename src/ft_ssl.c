@@ -2,21 +2,6 @@
 
 int main(int argc, char **argv)
 {
-	// base64_encode("Man", 3);
-	// base64_encode("Ma", 2);
-	// base64_encode("M", 1);
-	// base64_encode("light work.", 11);
-	// base64_encode("light work", 10);
-
-	// base64_decode("TWFu", 4);
-	// base64_decode("TWE=", 4);
-	// base64_decode("TQ==", 4);
-	// base64_decode("bGlnaHQgdw==", 12);
-
-	uint64_t bits = 0x123456ABCD132536;
-
-	des((uint64_t *)&bits, "", 1, 0);
-	return 0;
 
 	if (argc == 1) {
 		printf("usage: ft_ssl command [command opts] [command args]\n");

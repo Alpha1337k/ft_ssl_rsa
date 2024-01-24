@@ -112,7 +112,7 @@ int handle_genrsa(genrsa_options_t options)
 	printf("EXP: '%u' '%u'\n", rsa.exponents[0], rsa.exponents[1]);
 	printf("COE: %d\n", rsa.coefficient);
 
-	print_rsa_private(options.out_fd, rsa);
+	print_rsa_private(options.out_fd, rsa, 0);
 
 	return 0;
 }

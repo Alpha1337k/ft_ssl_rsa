@@ -18,6 +18,7 @@
 #define PRIVATE_END "\n-----END RSA PRIVATE KEY-----"
 #define PUBLIC_START "-----BEGIN PUBLIC KEY-----\n"
 #define PUBLIC_END "\n-----END PUBLIC KEY-----"
+#define ENCRYPT_INFO "Proc-Type: 4,ENCRYPTED\nDEK-Info: DES-CBC\n"
 
 typedef struct genrsa_options_s
 {
@@ -31,6 +32,7 @@ typedef struct rsa_options_s
 	int in_fd;
 	int out_fd;
 	char *passin;
+	char *passout;
 	uint8_t des;
 	uint8_t check;
 	uint8_t text;
@@ -94,7 +96,7 @@ priv_rsa_t	asn_decode_rsa(uint8_t *stream);
 uint8_t	*asn_encode_priv_rsa(priv_rsa_t rsa);
 uint8_t	*asn_encode_pub_rsa(pub_rsa_t rsa);
 
-void	print_rsa_private(int fd, priv_rsa_t rsa);
+void	print_rsa_private(int fd, priv_rsa_t rsa, char *passout);
 void	print_rsa_public(int fd, pub_rsa_t rsa);
 
 uint8_t *read_key(int fd, long *start_idx,long *end_idx,char *start_str,char *end_str);
@@ -104,5 +106,7 @@ priv_rsa_t	asn_decode_priv_rsa(uint8_t *stream);
 pub_rsa_t	asn_decode_pub_rsa(uint8_t *stream);
 
 uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt);
+
+char *get_pass(char *pass_cmd, char *prompt);
 
 #endif

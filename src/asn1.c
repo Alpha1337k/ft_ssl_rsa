@@ -103,7 +103,7 @@ size_t	asn_write_int(uint8_t *buf, int val)
 
 uint8_t	*asn_encode_priv_rsa(priv_rsa_t rsa)
 {
-	uint8_t *buf = malloc(67);
+	uint8_t *buf = calloc(72, 1);
 	if (!buf) return 0;
 
 	uint8_t header[] = {0x30,0x82,0x0,0x40,0x2,0x1,0x0};
