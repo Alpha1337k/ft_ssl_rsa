@@ -170,15 +170,6 @@ void print_pos(uint64_t v)
 	printf("\n");
 }
 
-uint64_t get_bits(uint64_t byte, uint8_t offset, uint8_t length)
-{
-	uint64_t mask = (1 << length) - 1;
-
-	printf("%lx %lx %lx\n", (byte >> offset) & 0x3F, mask, (byte >> offset) & mask);
-
-	return (byte >> offset) & mask;
-}
-
 uint8_t *des_encrypt(uint64_t *bytes, char *key, size_t long_len)
 {
 	key = "\xDD\xCC\x36\x27\x18\x09\xBB\xAA";
@@ -224,43 +215,41 @@ uint8_t *des_encrypt(uint64_t *bytes, char *key, size_t long_len)
 		{
 			uint32_t tmp = chunk_right;
 
-			printf("RE: %lX\n", chunk_right);
+			// printf("RE: %lX\n", chunk_right);
 			uint64_t right_expanded = permute_64(chunk_right, 32, expansion, 48);
 
-			printf("RE: %lX\n", right_expanded);
+			// printf("RE: %lX\n", right_expanded);
 			right_expanded ^= keys[n];
 			right_expanded &= 0xFFFFFFFFFFFF;
-			printf("XORED: %lX %lX\n", right_expanded, keys[n]);
+			// printf("XORED: %lX %lX\n", right_expanded, keys[n]);
 
 			uint64_t right_subsituted = 0;
 
 			for (size_t c = 0; c < 8; c++)
 			{
 				uint8_t bits = (right_expanded >> (42 - c * 6)) & 0x3F;
-				printf("%x %lx %lx\n", bits, (right_expanded >> (42 - c * 6)), right_expanded);
 				uint8_t row = (((bits & 0x20) != 0) << 1) | bits & 0x1;
 				uint8_t col = (bits & 0x1E) >> 1;
 
-				printf("RC: %d %d\n\n", row, col);
+				// printf("RC: %d %d\n\n", row, col);
 
 				right_subsituted <<= 4;
 				right_subsituted |= sbox[c][row][col];
 			}
 
-			printf("SBOX: %lX\n", right_subsituted);
+			// printf("SBOX: %lX\n", right_subsituted);
 
 			chunk_right = permute_64(right_subsituted, 32, unexpansion, 32);
-			printf("PERM: %lX\n", chunk_right);
+			// printf("PERM: %lX\n", chunk_right);
 			chunk_right &= 0xFFFFFFFF;
 			chunk_right ^= chunk_left;
 
-			printf("XOR2: %lX\n", chunk_right);
+			// printf("XOR2: %lX\n", chunk_right);
 
 			chunk_left = tmp;
 
-			printf("Round %ld L:0x%x R:0x%x\n", n, chunk_left, chunk_right);
+			printf("Round %ld L:0x%X R:0x%X\n", n, chunk_left, chunk_right);
 			
-			break;
 		}
 		
 		chunk = ((uint64_t)chunk_right << 32) | chunk_left;
@@ -268,6 +257,8 @@ uint8_t *des_encrypt(uint64_t *bytes, char *key, size_t long_len)
 		chunk = permute_64(chunk, 64, nip, 64);
 
 		bytes[i] = chunk;
+
+		printf("RESULT: %lX\n", bytes[i]);
 	}
 
 	return (uint8_t *)bytes;
