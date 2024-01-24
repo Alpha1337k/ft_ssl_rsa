@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 
 	uint64_t bits = 0x123456ABCD132536;
 
-	des_encrypt((uint64_t *)&bits, "", 1);
+	des((uint64_t *)&bits, "", 1, 0);
 	return 0;
 
 	if (argc == 1) {

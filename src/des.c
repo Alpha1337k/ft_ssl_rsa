@@ -170,7 +170,7 @@ void print_pos(uint64_t v)
 	printf("\n");
 }
 
-uint8_t *des_encrypt(uint64_t *bytes, char *key, size_t long_len)
+uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 {
 	key = "\xDD\xCC\x36\x27\x18\x09\xBB\xAA";
 
@@ -219,7 +219,7 @@ uint8_t *des_encrypt(uint64_t *bytes, char *key, size_t long_len)
 			uint64_t right_expanded = permute_64(chunk_right, 32, expansion, 48);
 
 			// printf("RE: %lX\n", right_expanded);
-			right_expanded ^= keys[n];
+			right_expanded ^= keys[decrypt ? 15 - n : n];
 			right_expanded &= 0xFFFFFFFFFFFF;
 			// printf("XORED: %lX %lX\n", right_expanded, keys[n]);
 

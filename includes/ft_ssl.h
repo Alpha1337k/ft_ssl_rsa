@@ -103,6 +103,6 @@ void	hexdump(int fd, uint8_t *bytes, size_t len);
 priv_rsa_t	asn_decode_priv_rsa(uint8_t *stream);
 pub_rsa_t	asn_decode_pub_rsa(uint8_t *stream);
 
-uint8_t *des_encrypt(uint64_t *bytes, char *key, size_t long_len);
+uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt);
 
 #endif
