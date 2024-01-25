@@ -60,11 +60,13 @@ uint16_t asn_decode_sequence(uint8_t *stream, size_t *iter, int *error)
 priv_rsa_t	asn_decode_priv_rsa(uint8_t *stream, int *error)
 {
 	size_t iter = 0;
-	priv_rsa_t rv;
+	priv_rsa_t rv = {};
 
 	DECODE_SAFE(uint16_t seq_len = asn_decode_sequence(stream, &iter, error))
 	DECODE_SAFE(uint64_t version = asn_decode_varint(stream, &iter, error));
 	
+	(void)seq_len;
+
 	if (version != 0) {
 		error[0] = 1;
 		return rv;

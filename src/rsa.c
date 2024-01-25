@@ -47,6 +47,8 @@ int handle_private_key(rsa_options_t options)
 			print_rsa_private(options.out_fd, pkey, pass);
 		}
 	}
+
+	return 0;
 }
 
 int handle_public_key(rsa_options_t options)
@@ -70,6 +72,7 @@ int handle_public_key(rsa_options_t options)
 		print_rsa_public(options.out_fd, pkey);
 	}
 
+	return 0;
 }
 
 

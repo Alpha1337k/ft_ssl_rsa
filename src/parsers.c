@@ -18,7 +18,7 @@ int asserted_open(char *file, int flags, int perms) {
 void assert_len(char *name, size_t i, size_t len) 
 {
 	if (i + 1 >= len) {
-		printf("ft_ssl: Error: too few arguments for -out\n");
+		printf("ft_ssl: Error: too few arguments for %s\n", name);
 		exit(1);
 	}
 }

@@ -2,7 +2,6 @@
 
 void	hexdump(int fd, uint8_t *bytes, size_t len)
 {
-	size_t i = 0;
 	char asciimap[17];
 
 	for (size_t i = 0; i < len;)

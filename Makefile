@@ -1,8 +1,7 @@
 NAME=ft_ssl
 
 CC=gcc
-FLAGS=-g
-# FLAGS=-Wall -Werror -Wextra -Wno-unused-variable
+FLAGS=-Wall -Werror -Wextra
 DEBUG_FLAGS=-g -fsanitize=address
 SRC=src/*.c -lm
 LIBS=-I includes

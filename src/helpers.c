@@ -10,7 +10,7 @@ long memstrchr(uint8_t *bytes, long bytes_len, char *str)
 
 	if (!bytes || (long)(bytes_len - str_len + 1) < 0) return -1;
 
-	for (int i = 0; i < bytes_len - str_len + 1; i++)
+	for (size_t i = 0; i < bytes_len - str_len + 1; i++)
 	{
 		if (memcmp(&bytes[i], str, str_len) == 0) {
 			return i;
@@ -21,7 +21,6 @@ long memstrchr(uint8_t *bytes, long bytes_len, char *str)
 
 char *get_pass(char *pass_cmd, char *prompt)
 {
-	char *rv;
 	char buf[1025];
 
 	memset(buf, 0, 1025);

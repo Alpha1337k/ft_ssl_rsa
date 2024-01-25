@@ -155,7 +155,7 @@ void print_pos(uint64_t v)
 {
 	for (size_t i = 0; i < 64; i++)
 	{
-		printf("%d", (v & (1lu << 63 - i)) != 0);
+		printf("%d", (v & (1lu << (63 - i))) != 0);
 	}
 	printf("\n");
 }
@@ -200,7 +200,7 @@ uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 			for (size_t c = 0; c < 8; c++)
 			{
 				uint8_t bits = (right_expanded >> (42 - c * 6)) & 0x3F;
-				uint8_t row = (((bits & 0x20) != 0) << 1) | bits & 0x1;
+				uint8_t row = ((((bits & 0x20) != 0) << 1) | bits) & 0x1;
 				uint8_t col = (bits & 0x1E) >> 1;
 
 				right_subsituted <<= 4;
