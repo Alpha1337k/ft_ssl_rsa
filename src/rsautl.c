@@ -53,7 +53,6 @@ uint8_t *decrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
 	for (size_t i = 0; i < len / 8; i++)
 	{
 		rv[i] = mod_pow(bytes[i], key.priv_exponent, key.modulus);
-		// printf("0x%lx == pow(0x%lx, 0x%lx, 0x%lx)\n", rv[i], bytes[i], key.priv_exponent, key.modulus);
 	}
 	
 	return (uint8_t *)rv;
@@ -70,8 +69,6 @@ uint64_t *encrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
 	for (size_t i = 0; i < len / 8; i++)
 	{
 		rv[i] = mod_pow(bytes[i], key.pub_exponent,  key.modulus);
-		// printf("0x%lx == pow(0x%lx, 0x%lx, 0x%lx)\n", rv[i], bytes[i], key.pub_exponent, key.modulus);
-		assert(bytes[i] < key.modulus);
 	}
 	
 	return rv;
@@ -118,20 +115,9 @@ uint8_t *read_input(int fd, size_t *len)
 	return rv;
 }
 
-
 int handle_rsautl(rsautl_options_t options)
 {
-	long start = 0, end = 0;
-	uint8_t *pkey_raw = read_key(options.in_key, 
-		&start, 
-		&end,
-		PRIVATE_START,
-		PRIVATE_END
-	);
-
-	uint8_t *pkey_decoded = base64_decode(&pkey_raw[start], end - start);
-
-	priv_rsa_t pkey = asn_decode_priv_rsa(pkey_decoded);
+	priv_rsa_t pkey = parse_private_key(options.in_key, 0);
 
 	size_t in_len = 0;
 	uint8_t *in = read_input(options.in_fd, &in_len);

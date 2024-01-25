@@ -1,9 +1,11 @@
 #include <ft_ssl.h>
 
-uint64_t asn_decode_varint(uint8_t *stream, size_t *iter)
+uint64_t asn_decode_varint(uint8_t *stream, size_t *iter, int *error)
 {
-	assert(stream[*iter] == 2);
-
+	if(stream[*iter] != 2) {
+		error[0] = 1;
+		return 0;
+	}
 
 	*(iter) += 1;
 
@@ -11,9 +13,10 @@ uint64_t asn_decode_varint(uint8_t *stream, size_t *iter)
 
 	*(iter) += 1;
 
-
-
-	assert(len <= 8);
+	if (len > 8) {
+		error[0] = 1;
+		return 0;
+	}
 
 	uint64_t rv = 0;
 
@@ -28,13 +31,19 @@ uint64_t asn_decode_varint(uint8_t *stream, size_t *iter)
 	return rv;
 }
 
-uint16_t asn_decode_sequence(uint8_t *stream, size_t *iter)
+uint16_t asn_decode_sequence(uint8_t *stream, size_t *iter, int *error)
 {
-	assert(stream[*iter] == 0x30);
+	if(stream[*iter] != 0x30) {
+		error[0] = 1;
+		return 0;
+	}
 
 	*(iter) += 1;
 
-	assert(stream[*iter] == 0x82);
+	if(stream[*iter] != 0x82) {
+		error[0] = 1;
+		return 0;
+	}
 
 	*(iter) += 1;
 
@@ -45,38 +54,43 @@ uint16_t asn_decode_sequence(uint8_t *stream, size_t *iter)
 	return rv;
 }
 
+#define DECODE_SAFE(cmd) cmd; if (*error != 0) {return rv;}
 
-priv_rsa_t	asn_decode_priv_rsa(uint8_t *stream)
+
+priv_rsa_t	asn_decode_priv_rsa(uint8_t *stream, int *error)
 {
 	size_t iter = 0;
 	priv_rsa_t rv;
 
-	uint16_t seq_len = asn_decode_sequence(stream, &iter);
-	uint64_t version = asn_decode_varint(stream, &iter);
-	assert(version == 0);
+	DECODE_SAFE(uint16_t seq_len = asn_decode_sequence(stream, &iter, error))
+	DECODE_SAFE(uint64_t version = asn_decode_varint(stream, &iter, error));
+	
+	if (version != 0) {
+		error[0] = 1;
+		return rv;
+	}
 
-	rv.modulus = asn_decode_varint(stream, &iter);
-	rv.pub_exponent = asn_decode_varint(stream, &iter);
-	rv.priv_exponent = asn_decode_varint(stream, &iter);
-
-	rv.primes[0] = asn_decode_varint(stream, &iter);
-	rv.primes[1] = asn_decode_varint(stream, &iter);
-	rv.exponents[0] = asn_decode_varint(stream, &iter);
-	rv.exponents[1] = asn_decode_varint(stream, &iter);
-	rv.coefficient = asn_decode_varint(stream, &iter);
+	DECODE_SAFE(rv.modulus = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.pub_exponent = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.priv_exponent = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.primes[0] = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.primes[1] = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.exponents[0] = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.exponents[1] = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.coefficient = asn_decode_varint(stream, &iter, error));
 
 	return rv;
 }
 
-pub_rsa_t	asn_decode_pub_rsa(uint8_t *stream)
+pub_rsa_t	asn_decode_pub_rsa(uint8_t *stream, int *error)
 {
 	size_t iter = 0;
 	pub_rsa_t rv;
 
 	stream += 22;
 
-	rv.modulus = asn_decode_varint(stream, &iter);
-	rv.pub_exponent = asn_decode_varint(stream, &iter);
+	DECODE_SAFE(rv.modulus = asn_decode_varint(stream, &iter, error));
+	DECODE_SAFE(rv.pub_exponent = asn_decode_varint(stream, &iter, error));
 
 	return rv;
 }

@@ -126,8 +126,6 @@ uint64_t permute_64(uint64_t val, size_t in_len, uint8_t *table, size_t out_len)
 		uint64_t tmp = (val >> (in_len - table[i])) & 0x1;
 
 		rv |= (tmp << (out_len - 1 - i));
-
-		// printf("F: %lu %ld\n", rv, tmp);
 	}
 	
 	return rv;
@@ -167,10 +165,6 @@ uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 	uint64_t hashed_key = hash_key(key);
 	uint64_t hashed_key_compressed = permute_64(hashed_key, 64, keyp, 56);
 
-
-
-	printf("Hashed key: 0x%lX KL: 0x%lX\n", hashed_key_compressed, hashed_key);
-
 	uint64_t keys[16];
 
 	uint64_t key_left = (hashed_key_compressed >> 28) & 0xFFFFFFF;
@@ -180,37 +174,26 @@ uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 	{
 		key_right = left_rotate(key_right, shifts[i], 28);
 		key_left = left_rotate(key_left, shifts[i], 28);
-		printf("KL: %lx\n", key_left);
-		printf("KR: %lx\n", key_right);
-
 
 		uint64_t concat = (key_left << 28) | key_right; 
-
-		printf("CC: %lx\n", concat);
 	
 		keys[i] = permute_64(concat, 56, pc2, 48);
-		printf("keys[%ld]: 0x%lX\n", i, keys[i]);
 	}
 
 	for (size_t i = 0; i < long_len; i++)
 	{
-		printf("Before IP: %lx\n", bytes[i]);
 		uint64_t chunk = permute_64(bytes[i], 64, ip, 64);
-		printf("After IP: %lx\n", chunk);
+
 		uint32_t chunk_left = chunk >> 32;
 		uint64_t chunk_right = chunk & 0xFFFFFFFF;
 
 		for (size_t n = 0; n < 16; n++)
 		{
 			uint32_t tmp = chunk_right;
-
-			// printf("RE: %lX\n", chunk_right);
 			uint64_t right_expanded = permute_64(chunk_right, 32, expansion, 48);
 
-			// printf("RE: %lX\n", right_expanded);
 			right_expanded ^= keys[decrypt ? 15 - n : n];
 			right_expanded &= 0xFFFFFFFFFFFF;
-			// printf("XORED: %lX %lX\n", right_expanded, keys[n]);
 
 			uint64_t right_subsituted = 0;
 
@@ -220,25 +203,15 @@ uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 				uint8_t row = (((bits & 0x20) != 0) << 1) | bits & 0x1;
 				uint8_t col = (bits & 0x1E) >> 1;
 
-				// printf("RC: %d %d\n\n", row, col);
-
 				right_subsituted <<= 4;
 				right_subsituted |= sbox[c][row][col];
 			}
 
-			// printf("SBOX: %lX\n", right_subsituted);
-
 			chunk_right = permute_64(right_subsituted, 32, unexpansion, 32);
-			// printf("PERM: %lX\n", chunk_right);
 			chunk_right &= 0xFFFFFFFF;
 			chunk_right ^= chunk_left;
 
-			// printf("XOR2: %lX\n", chunk_right);
-
-			chunk_left = tmp;
-
-			printf("Round %ld L:0x%X R:0x%lX\n", n, chunk_left, chunk_right);
-			
+			chunk_left = tmp;			
 		}
 		
 		chunk = ((uint64_t)chunk_right << 32) | chunk_left;
@@ -246,8 +219,6 @@ uint8_t *des(uint64_t *bytes, char *key, size_t long_len, uint8_t decrypt)
 		chunk = permute_64(chunk, 64, nip, 64);
 
 		bytes[i] = chunk;
-
-		printf("RESULT: %lX\n", bytes[i]);
 	}
 
 	return (uint8_t *)bytes;

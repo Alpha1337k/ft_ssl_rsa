@@ -76,16 +76,18 @@ rsa_options_t parse_rsa(int argc, char **argv) {
 		if (strcmp(argv[i], "-inform") == 0) {
 			assert_len("-inform", i, argc);
 
-			if (strcmp(argv[i], "PEM") != 0) {
+			if (strcmp(argv[i + 1], "PEM") != 0) {
 				print_error("Only PEM is allowed.");
+				exit(1);
 			}
 
 			rv.inform = argv[i + 1];
 		} else if (strcmp(argv[i], "-outform") == 0) {
 			assert_len("-outform", i, argc);
 
-			if (strcmp(argv[i], "PEM") != 0) {
+			if (strcmp(argv[i + 1], "PEM") != 0) {
 				print_error("Only PEM is allowed.");
+				exit(1);
 			}
 
 			rv.outform = argv[i + 1];
@@ -139,7 +141,7 @@ genrsa_options_t parse_genrsa(int argc, char **argv)
 			}
 			int fd = open(argv[i + 1], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 			if (fd == -1) {
-				printf("ft_ssl: Error: failed to open %s", argv[i + 1]);
+				printf("ft_ssl: Error: failed to open %s\n", argv[i + 1]);
 				exit(1);
 			}
 			rv.out_fd = fd;

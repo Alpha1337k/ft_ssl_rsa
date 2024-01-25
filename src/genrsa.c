@@ -1,32 +1,5 @@
 #include <ft_ssl.h>
 
-uint64_t modInverse(uint64_t A, uint64_t M) 
-{ 
-    for (uint64_t X = 1; X < M; X++) 
-        if (((A % M) * (X % M)) % M == 1) 
-            return X; 
-}
-
-long gcdExtended(long a, long b, long* x, long* y)
-{
-    // Base Case
-    if (a == 0) {
-        *x = 0;
-        *y = 1;
-        return b;
-    }
- 
-    long x1, y1; // To store results of recursive call
-    long gcd = gcdExtended(b % a, a, &x1, &y1);
- 
-    // Update x and y using results of recursive
-    // call
-    *x = y1 - (b / a) * x1;
-    *y = x1;
- 
-    return gcd;
-}
-
 long mut_inv(long e, long mod)
 {
 	long t = 0, nT = 1, r = mod, nR = e, q = 0, lT = 0, lR = 0;
@@ -63,9 +36,6 @@ uint32_t get_prime(int rand_fd) {
 		}
 		if (is_prime(fetched)) {
 			return fetched;
-			printf("+++++\n");
-		} else {
-			printf(".");
 		}
 	}
 	return 0;
@@ -79,6 +49,8 @@ int handle_genrsa(genrsa_options_t options)
 		exit(1);
 	}
 
+	fprintf(stderr, "Generating RSA private key, 64 bit long modulus (2 primes)\n");
+
 	priv_rsa_t rsa;
 
 	while (1)
@@ -88,18 +60,18 @@ int handle_genrsa(genrsa_options_t options)
 
 		rsa.modulus = (uint64_t)rsa.primes[0] * (uint64_t)rsa.primes[1];
 
+		printf(".");
+
 		if (rsa.modulus >> 63) {
+			printf("+++++\n");
 			break;
 		}
 	}
-	printf("\nM:%lu\tP1:%u\tP2:%u\n", rsa.modulus, rsa.primes[0], rsa.primes[1]);
-	// printf("gcd: %lu\n", gcd(primes[0], primes[1]));
-
 	uint64_t ltf = lcm(rsa.primes[0] - 1, rsa.primes[1] - 1);
 
-	printf("mod: %lu, lcm: %lu\n", rsa.modulus, ltf);
-
 	rsa.pub_exponent = 0x10001;
+
+	fprintf(stderr, "e is 65537 (0x10001)\n");
 
 	rsa.priv_exponent = mut_inv(rsa.pub_exponent, ltf);
 
@@ -107,10 +79,6 @@ int handle_genrsa(genrsa_options_t options)
 	rsa.exponents[1] = rsa.priv_exponent % (rsa.primes[1] - 1);
 
 	rsa.coefficient = mut_inv(rsa.primes[1], rsa.primes[0]);
-
-	printf("E: %lu D: %ld\n", rsa.pub_exponent, rsa.priv_exponent);
-	printf("EXP: '%u' '%u'\n", rsa.exponents[0], rsa.exponents[1]);
-	printf("COE: %d\n", rsa.coefficient);
 
 	print_rsa_private(options.out_fd, rsa, 0);
 

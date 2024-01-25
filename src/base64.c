@@ -1,4 +1,5 @@
 #include <ft_ssl.h>
+#include <math.h>
 
 uint8_t get_value(uint8_t byte, uint8_t offset, uint8_t len)
 {
@@ -31,25 +32,22 @@ uint8_t decode_base64_val(uint8_t byte)
 	assert(0);
 }
 
-#include <math.h>
 uint8_t *base64_encode(uint8_t *bytes, size_t len)
 {
 	size_t encoded_size = ceilf(len * 1.3333333334);
 	encoded_size += len % 4;
 
-	uint8_t *encoded = malloc(sizeof(uint8_t) * encoded_size);
-	memset(encoded, 0, encoded_size);
+	uint8_t *encoded = malloc(sizeof(uint8_t) * encoded_size + 1);
+	memset(encoded, 0, encoded_size + 1);
 
 	size_t encoded_idx = 0;
-
+ 
 	uint64_t byte_offset = 0;
 	uint8_t bit_offset = 0;
 
 	while (byte_offset < len)
 	{
 		uint8_t fetched = get_value(bytes[byte_offset], bit_offset, 8 - bit_offset >= 6 ? 6 : 8 - bit_offset);
-
-		// printf("F1 | BO:%d BY:%ld V:%x R:%x\n", bit_offset, byte_offset, bytes[byte_offset], fetched);
 
 		if (bit_offset + 6 > 8)
 		{
@@ -60,7 +58,6 @@ uint8_t *base64_encode(uint8_t *bytes, size_t len)
 			byte_offset++;
 
 			if (byte_offset < len) {
-				// printf("F2 | BD:%d BO:%d V:%x R:%x F:%x\n", bits_done, bit_offset, bytes[byte_offset], get_value(bytes[byte_offset], 0, 6 - bits_done), fetched);
 				fetched |= get_value(bytes[byte_offset], 0, 6 - bits_done);
 				bit_offset = (bit_offset + 6) % 8;
 			} else {
@@ -73,19 +70,17 @@ uint8_t *base64_encode(uint8_t *bytes, size_t len)
 		}
 		if (bit_offset == 0) byte_offset++;
 
-		// printf("F3: R:%x %c\n", fetched, get_base64_val(fetched));
-
 		encoded[encoded_idx++] = get_base64_val(fetched);
-
-		// printf("\n");
 	}
+	encoded_idx--;
 
 	while (encoded_idx % 4 != 0 && encoded_idx % 4 != 4)
 	{
 		encoded[encoded_idx++] = '=';
 	}
+
+	encoded[encoded_idx] = 0;
 	
-	// printf("RESULT: %s\n", encoded);
 	return encoded;
 }
 
@@ -126,17 +121,6 @@ uint8_t *base64_decode(uint8_t *bytes, size_t len)
 			(decode_base64_val(bytes[byte_offset]) & first_mask) << first_mask_offset |
 			(decode_base64_val(bytes[byte_offset + 1]) & second_mask) >> second_mask_offset;
 
-
-			// decode_base64_val((bytes[byte_offset] & first_mask) << first_mask_offset) |
-			// decode_base64_val((bytes[byte_offset + 1] & second_mask) >> second_mask_offset);
-		// printf("V-%ld: R:0x%x M1:%x M2:%x O1:%x O2:%x B0:%d R:%d BY:%ld\n", encoded_idx, decoded[encoded_idx], first_mask, second_mask, first_mask_offset, second_mask_offset, bit_offset, remaining_bit_len, byte_offset);
-		// printf("%c (%ld) 0x%x 0x%x\tV1:%x V2:%x \n", bytes[byte_offset], byte_offset, 
-		// 	(uint8_t)((decode_base64_val(bytes[byte_offset]) & first_mask) << first_mask_offset), 
-		// 	(uint8_t)(decode_base64_val(bytes[byte_offset + 1]) >> second_mask_offset),
-		// 	decode_base64_val(bytes[byte_offset]),
-		// 	decode_base64_val(bytes[byte_offset + 1])
-			// );
-		
 		encoded_idx++;
 		bit_offset = (bit_offset + 8) % 6;
 		if (bit_offset == 0) {
@@ -144,9 +128,7 @@ uint8_t *base64_decode(uint8_t *bytes, size_t len)
 		} else {
 			byte_offset++;
 		}
-		// print_decoded(decoded, encoded_idx);
 	}
 
 	return decoded;
 }
-

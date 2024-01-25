@@ -1,161 +1,8 @@
 #include <ft_ssl.h>
 
-long memstrchr(uint8_t *bytes, long bytes_len, char *str)
-{
-	size_t str_len = strlen(str);
-
-	if (!bytes || (long)(bytes_len - str_len + 1) < 0) return -1;
-
-	for (int i = 0; i < bytes_len - str_len + 1; i++)
-	{
-		if (memcmp(&bytes[i], str, str_len) == 0) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-char *get_pass(char *pass_cmd, char *prompt)
-{
-	char *rv;
-	char buf[1025];
-
-	memset(buf, 0, 1025);
-
-	if (strncmp(pass_cmd, "stdin", 4) == 0) {
-		printf("%s: ", prompt);
-		fflush(stdout);
-		if (scanf("%1024s", buf) == 0) {
-			printf("ft_ssl: error: password not provided");
-		}
-
-		return strdup(buf);
-	} else if (strncmp(pass_cmd, "pass:", 5) == 0) {
-		return strdup(pass_cmd + 5);
-	} else if (strncmp(pass_cmd, "env:", 4) == 0) {
-		return strdup(getenv(pass_cmd + 4));
-	} else if (strncmp(pass_cmd, "file:", 5) == 0) {
-		int fd = open(pass_cmd + 5, O_RDONLY);
-		if (fd == -1) {
-			printf("ft_ssl: Error: could not open password\n");
-			exit(1);
-		}
-
-		read(fd, buf, 1024);
-		close(fd);
-
-		return strdup(buf);
-	}
-	printf("ft_ssl: Error: unknown pass option\n");
-	exit(1);
-	return 0;
-}
-
-#define START_FOUND 1
-#define END_FOUND 2
-
-
-uint8_t *read_key(
-	int fd, 
-	long *start_idx,
-	long *end_idx,
-	char *start_str,
-	char *end_str
-	)
-{
-	int status = 0;
-	uint8_t buf[513];
-	uint8_t *rv = 0;
-	size_t rv_len = 0;
-
-	uint8_t state = 0;
-
-	do
-	{
-		status = read(fd, &buf, 512);
-
-		if (status >= 0) {
-			size_t new_len = rv_len + status;
-			uint8_t *new_rv = malloc(new_len);
-			if (!new_rv) {
-				printf("ft_ssl: Error: malloc fail\n");
-				exit(1);
-			}
-
-			if (rv) {
-				memcpy(new_rv, rv, rv_len);
-				memcpy(new_rv + rv_len, buf, status);
-				rv_len = new_len;
-				free(rv);
-				rv = new_rv;
-			} else {
-				memcpy(new_rv, buf, status);
-				rv_len = new_len;
-				rv = new_rv;
-			}
-		}
-
-		if ((state & START_FOUND) == 0) {
-			start_idx[0] = memstrchr(rv, rv_len, start_str);
-			if (*start_idx != -1) {
-				(*start_idx) += strlen(start_str);
-				state |= START_FOUND;
-			}
-		}
-		if (state == 1) {
-			end_idx[0] = memstrchr(rv, rv_len, end_str);
-			if (*end_idx != -1) {
-				state |= END_FOUND;
-			}
-		}
-
-	} while (status > 0 && state != 3);
-
-	if (state != (START_FOUND | END_FOUND)) {
-		printf("ft_ssl: Error: invalid key. (%d, %d)\n", state, status);
-		exit(1);
-	}
-
-	long enc_idx = memstrchr(rv, rv_len, ENCRYPT_INFO);
-	if (enc_idx != -1) {
-		start_idx[0] += sizeof(ENCRYPT_INFO) - 1;
-	}
-
-
-	return rv;	
-}
-
 int handle_private_key(rsa_options_t options)
 {
-	long start = 0, end = 0;
-
-	uint8_t *key_raw = read_key(
-		options.in_fd, 
-		&start, 
-		&end,
-		PRIVATE_START,
-		PRIVATE_END
-	);
-
-	uint8_t *key_decoded = base64_decode(&key_raw[start], end - start);
-
-	char *pass = 0;
-
-	if (options.passin)
-	{
-		pass = get_pass(options.passin, "Enter passin");
-		key_decoded = des((uint64_t *)key_decoded, pass, 9, 1);
-	}
-
-	uint64_t *key_long = (uint64_t *)key_decoded;
-
-	for (size_t i = 0; i < 9; i++)
-	{
-		printf("0x%lx ", key_long[i]);
-	}
-	printf("\n");
-
-	priv_rsa_t pkey = asn_decode_priv_rsa(key_decoded);
+	priv_rsa_t pkey = parse_private_key(options.in_fd, options.passin);
 
 	if (options.modulus) {
 		printf("Modulus=%lX\n", pkey.modulus);
@@ -191,41 +38,27 @@ int handle_private_key(rsa_options_t options)
 
 			print_rsa_public(options.out_fd, pub);
 		} else {
-			print_rsa_private(options.out_fd, pkey, options.passout);
+			char *pass = 0;
+			if (options.des && options.passout)
+				pass = options.passout;
+			else if (options.des)
+				pass = "stdin";	
+
+			print_rsa_private(options.out_fd, pkey, pass);
 		}
 	}
-
-	free(key_raw);
-	free(key_decoded);
 }
 
 int handle_public_key(rsa_options_t options)
 {
-	size_t raw_len = 0;
-	long start = 0, end = 0;
-
-	uint8_t *key_raw = read_key(
-		options.in_fd, 
-		&start, 
-		&end,
-		PUBLIC_START,
-		PUBLIC_END
-		);
-
-	uint8_t *key_decoded = base64_decode(&key_raw[start], end - start);
-
-	pub_rsa_t pkey = asn_decode_pub_rsa(key_decoded);
+	pub_rsa_t pkey = parse_public_key(options.in_fd);
 
 	if (options.modulus) {
 		printf("Modulus=%lX\n", pkey.modulus);
 	}
 
-	if (options.check) {
-		printf("RSA key ok\n");
-	}
-
 	if (options.text) {
-		printf("RSA Private-Key: (64 bit)\n");
+		printf("RSA Public-Key: (64 bit)\n");
 		printf("modulus:%lu\npublicExponent:%lu\n",
 			pkey.modulus,
 			pkey.pub_exponent
@@ -237,8 +70,6 @@ int handle_public_key(rsa_options_t options)
 		print_rsa_public(options.out_fd, pkey);
 	}
 
-	free(key_raw);
-	free(key_decoded);
 }
 
 
