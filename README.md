@@ -10,8 +10,3 @@ https://stackoverflow.com/questions/5974633/asn-1-der-formatted-private-key
 https://8gwifi.org/PemParserFunctions.jsp
 https://datatracker.ietf.org/doc/html/rfc3447#appendix-A.1.2
 https://csrc.nist.gov/files/pubs/fips/46-3/final/docs/fips46-3.pdf
-
-# TODO
-- make rsa werkend
-- parse en display rsa keys
-- encrypt en decrypt rsa keys.
