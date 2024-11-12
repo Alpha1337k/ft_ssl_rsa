@@ -44,7 +44,10 @@ char *get_pass(char *pass_cmd, char *prompt)
 			exit(1);
 		}
 
-		read(fd, buf, 1024);
+		if (read(fd, buf, 1024) == -1) {
+			perror("ft_ssl: Error: ");
+			exit(1);
+		}
 		close(fd);
 
 		return strdup(buf);

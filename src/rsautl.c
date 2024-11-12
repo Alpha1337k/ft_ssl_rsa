@@ -137,7 +137,10 @@ int handle_rsautl(rsautl_options_t options)
 	if (options.hexdump) {
 		hexdump(options.out_fd, out, in_len);
 	} else {
-		write(options.out_fd, out, in_len);
+		if (write(options.out_fd, out, in_len) == -1) {
+			perror("ft_ssl: Error: ");
+			exit(1);
+		}
 	}
 
 	return 0;
