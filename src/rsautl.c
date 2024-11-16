@@ -46,7 +46,7 @@ uint8_t *decrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
 {
 	uint64_t *rv = malloc(sizeof(uint64_t) * (len / 8));
 	if (!rv) {
-		printf("ft_ssl: Error: malloc fail\n");
+		perror("ft_ssl: Error: malloc fail: ");
 		exit(1);
 	}
 
@@ -62,7 +62,7 @@ uint64_t *encrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
 {
 	uint64_t *rv = malloc(sizeof(uint64_t) * (len / 8));
 	if (!rv) {
-		printf("ft_ssl: Error: malloc fail\n");
+		perror("ft_ssl: Error: malloc fail: ");
 		exit(1);
 	}
 
@@ -77,7 +77,7 @@ uint64_t *encrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
 uint8_t *read_input(int fd, size_t *len)
 {
 	int status = 0;
-	uint8_t buf[513];
+	uint8_t buf[512];
 	uint8_t *rv = 0;
 	size_t rv_len = 0;
 
