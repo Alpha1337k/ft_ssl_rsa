@@ -25,8 +25,9 @@ $(LIB): $(OBJS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(LIBS) $(FLAGS) -c $< -o $@
 
-test: test/base64.c $(LIB)
+test: test/base64.c test/rsautl.c $(LIB)
 	gcc test/base64.c $(LIB) $(LIBS) -lm -o base64_test
+	gcc test/rsautl.c $(LIB) $(LIBS) -lm -o rsautl_test
 
 clean:
 	$(RM) $(OBJS) $(LIB)

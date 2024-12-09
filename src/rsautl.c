@@ -42,36 +42,22 @@ size_t			mod_pow(size_t value, size_t exponent, size_t mod)
 	return ((size_t)result);
 }
 
-uint8_t *decrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
+data_chunk_t *crypt(uint64_t exp, uint64_t mod,  data_chunk_t *chunks, size_t len)
 {
-	uint64_t *rv = malloc(sizeof(uint64_t) * (len / 8));
-	if (!rv) {
-		perror("ft_ssl: Error: malloc fail: ");
-		exit(1);
-	}
+	data_chunk_t *out = malloc(len * sizeof(data_chunk_t));
 
-	for (size_t i = 0; i < len / 8; i++)
+	for (size_t i = 0; i < len; i++)
 	{
-		rv[i] = mod_pow(bytes[i], key.priv_exponent, key.modulus);
+		size_t item = ((uint64_t *)chunks[i].data)[0];
+
+		size_t data = mod_pow(item, exp, mod);
+	
+		out[i].size = chunks[i].size;
+		memcpy(out[i].data, &data, 8);
+
 	}
 	
-	return (uint8_t *)rv;
-}
-
-uint64_t *encrypt(priv_rsa_t key, uint64_t *bytes, size_t len)
-{
-	uint64_t *rv = malloc(sizeof(uint64_t) * (len / 8));
-	if (!rv) {
-		perror("ft_ssl: Error: malloc fail: ");
-		exit(1);
-	}
-
-	for (size_t i = 0; i < len / 8; i++)
-	{
-		rv[i] = mod_pow(bytes[i], key.pub_exponent,  key.modulus);
-	}
-	
-	return rv;
+	return out;
 }
 
 uint8_t *read_input(int fd, size_t *len)
@@ -115,6 +101,63 @@ uint8_t *read_input(int fd, size_t *len)
 	return rv;
 }
 
+uint8_t *dechunk_input(data_chunk_t *in, size_t len) {
+	size_t byte_len = 0;
+
+	for (size_t i = 0; i < len; i++)
+	{
+		byte_len += in[i].size;
+	}
+	
+	uint8_t *out = malloc(byte_len);
+
+	size_t out_i = 0;
+
+	for (size_t i = 0; i < len; i++)
+	{
+		memcpy(&out[out_i], in[i].data, in[i].size);
+
+		out_i += in[i].size;
+	}
+
+	return out;
+}
+
+data_chunk_t *chunk_input(uint8_t *in, size_t *len) {
+	size_t i = 0;
+
+	size_t resized_len = ceilf(*len / 7.0);
+
+	data_chunk_t *out = calloc(resized_len, sizeof(data_chunk_t));
+
+	if (out == 0) {
+		perror("ft_ssl: Error: malloc fail\n");
+		exit(1);
+	}
+
+	size_t out_i = 0;
+
+	while (i < *len)
+	{
+		uint8_t chunk_size = *len - i;
+		if (chunk_size > 7) {
+			chunk_size = 7;
+		}
+
+		out[out_i].size = chunk_size;
+
+		memcpy(out[out_i].data, &in[i], chunk_size);
+
+		out_i++;
+		i += 7;
+	}
+
+	len[0] = resized_len;
+
+	return out;
+
+}
+
 int handle_rsautl(rsautl_options_t options)
 {
 	priv_rsa_t pkey = parse_private_key(options.in_key, 0);
@@ -126,12 +169,17 @@ int handle_rsautl(rsautl_options_t options)
 
 	if (options.task == ENCRYPT)
 	{
-		out = (uint8_t *)encrypt(pkey, (uint64_t *)in, in_len);
+		data_chunk_t *chunked = chunk_input(in, &in_len);
+
+		out = (uint8_t *)crypt(pkey.pub_exponent, pkey.modulus, (data_chunk_t *)chunked, in_len);
 	}
 	else if (options.task == DECRYPT)
 	{
-		assert(in_len % 8 == 0);
-		out = (uint8_t *)decrypt(pkey, (uint64_t *)in, in_len);
+		assert(in_len % 9 == 0);
+
+		data_chunk_t *crypt_out = crypt(pkey.priv_exponent, pkey.modulus, (data_chunk_t *)in, in_len / 9);
+
+		out = dechunk_input(crypt_out, in_len / 9);
 	}
 
 	if (options.hexdump) {

@@ -74,6 +74,13 @@ typedef struct pub_rsa_s
 	uint64_t pub_exponent;
 } pub_rsa_t;
 
+typedef struct data_chunk_s
+{
+	uint8_t size;
+	uint8_t data[8];
+} data_chunk_t;
+
+
 
 
 rsa_options_t parse_rsa(int argc, char **argv);
@@ -110,5 +117,11 @@ char *get_pass(char *pass_cmd, char *prompt);
 
 priv_rsa_t	parse_private_key(int in_fd, char *passin);
 pub_rsa_t	parse_public_key(int in_fd);
+
+data_chunk_t	*chunk_input(uint8_t *in, size_t *len);
+uint8_t			*dechunk_input(data_chunk_t *in, size_t len);
+
+data_chunk_t *crypt(uint64_t exp, uint64_t mod, data_chunk_t *chunks, size_t len);
+
 
 #endif
