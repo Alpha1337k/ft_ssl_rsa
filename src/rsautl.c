@@ -73,9 +73,7 @@ uint8_t *read_input(int fd, size_t *len)
 
 		if (status > 0) {
 			size_t new_len = rv_len + status;
-			if (new_len % 8 != 0) {
-				new_len += (8 - new_len % 8);
-			}
+
 			uint8_t *new_rv = malloc(new_len);
 		
 			if (!new_rv) {
@@ -101,7 +99,7 @@ uint8_t *read_input(int fd, size_t *len)
 	return rv;
 }
 
-uint8_t *dechunk_input(data_chunk_t *in, size_t len) {
+uint8_t *dechunk_input(data_chunk_t *in, size_t len, size_t *write_len) {
 	size_t byte_len = 0;
 
 	for (size_t i = 0; i < len; i++)
@@ -113,9 +111,13 @@ uint8_t *dechunk_input(data_chunk_t *in, size_t len) {
 
 	size_t out_i = 0;
 
+	*write_len = byte_len;
+
 	for (size_t i = 0; i < len; i++)
 	{
 		memcpy(&out[out_i], in[i].data, in[i].size);
+
+		// printf("%d %s$\n", in[i].size, &out[out_i]);
 
 		out_i += in[i].size;
 	}
@@ -139,7 +141,8 @@ data_chunk_t *chunk_input(uint8_t *in, size_t *len) {
 
 	while (i < *len)
 	{
-		uint8_t chunk_size = *len - i;
+		size_t chunk_size = (*len) - i;
+
 		if (chunk_size > 7) {
 			chunk_size = 7;
 		}
@@ -166,10 +169,13 @@ int handle_rsautl(rsautl_options_t options)
 	uint8_t *in = read_input(options.in_fd, &in_len);
 
 	uint8_t *out = 0;
+	size_t write_len = in_len;
 
 	if (options.task == ENCRYPT)
 	{
 		data_chunk_t *chunked = chunk_input(in, &in_len);
+
+		write_len = in_len * sizeof(data_chunk_t);
 
 		out = (uint8_t *)crypt(pkey.pub_exponent, pkey.modulus, (data_chunk_t *)chunked, in_len);
 	}
@@ -179,13 +185,15 @@ int handle_rsautl(rsautl_options_t options)
 
 		data_chunk_t *crypt_out = crypt(pkey.priv_exponent, pkey.modulus, (data_chunk_t *)in, in_len / 9);
 
-		out = dechunk_input(crypt_out, in_len / 9);
+		out = dechunk_input(crypt_out, in_len / 9, &write_len);
 	}
 
+	printf("WRITING %ld\n", write_len);
+
 	if (options.hexdump) {
-		hexdump(options.out_fd, out, in_len);
+		hexdump(options.out_fd, out, write_len);
 	} else {
-		write(options.out_fd, out, in_len);
+		write(options.out_fd, out, write_len);
 	}
 
 	return 0;

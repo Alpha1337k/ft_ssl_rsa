@@ -15,6 +15,7 @@ void print_hex(uint8_t *bytes, size_t len)
 int test(priv_rsa_t key, char *input, size_t len)
 {
 	size_t chunked_len = len;
+	size_t write_len = 0;
 
 	data_chunk_t *chunked = chunk_input(input, &chunked_len);
 
@@ -22,7 +23,7 @@ int test(priv_rsa_t key, char *input, size_t len)
 
 	data_chunk_t *dec = crypt(key.priv_exponent, key.modulus, enc, chunked_len);
 
-	uint8_t *out = dechunk_input(dec, chunked_len);
+	uint8_t *out = dechunk_input(dec, chunked_len, &write_len);
 
 	int result = memcmp(input, out, len);
 
