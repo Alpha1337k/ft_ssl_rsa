@@ -15,18 +15,35 @@ SRC=src/asn1.c \
 	src/print.c \
 	src/rsa.c \
 	src/rsautl.c \
-	 -lm
+	-lm
 LIBS=-I includes
-OBJ=
-RM =rm -rf
+OBJ_DIR=dist
+SRC_DIR=src
+
+MAIN=src/ft_ssl.c
+SRCS_ALL=$(wildcard $(SRC_DIR)/*.c)
+SRCS=$(filter-out $(MAIN),$(SRCS_ALL))
+OBJS=$(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+RM=rm -rf
+LIB=dist/libssl.a
 
 all: $(NAME)
 
-$(NAME): $(SRC)
-	$(CC) $(FLAGS) $(LIBS) $(SRC) -o $(NAME)
+$(NAME): $(LIB) $(OBJS)
+	$(CC) $(FLAGS) $(LIBS) $(OBJS) $(MAIN) -lm -o $(NAME)
+
+$(LIB): $(OBJS)
+	ar rcs $(LIB) $(OBJS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(LIBS) $(FLAGS) -c $< -o $@
+
+test: test/base64.c test/rsautl.c $(LIB)
+	gcc test/base64.c $(LIB) $(LIBS) -lm -o base64_test
+	gcc test/rsautl.c $(LIB) $(LIBS) -lm -o rsautl_test
 
 clean:
-	$(RM) $(OBJ)
+	$(RM) $(OBJS) $(LIB)
 
 fclean: clean
 	$(RM) $(NAME)

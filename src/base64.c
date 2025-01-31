@@ -27,8 +27,6 @@ uint8_t decode_base64_val(uint8_t byte)
 	if (byte >= 'A') return byte - 'A';
 	if (byte >= '0') return 52 + byte - '0';
 
-	printf("%x\n", byte);
-
 	assert(0);
 }
 
@@ -70,9 +68,10 @@ uint8_t *base64_encode(uint8_t *bytes, size_t len)
 		}
 		if (bit_offset == 0) byte_offset++;
 
+		// printf("S: %x %c\n", fetched, get_base64_val(fetched));
 		encoded[encoded_idx++] = get_base64_val(fetched);
 	}
-	encoded_idx--;
+	// encoded_idx--;
 
 	while (encoded_idx % 4 != 0 && encoded_idx % 4 != 4)
 	{
@@ -98,14 +97,16 @@ void print_decoded(uint8_t *decoded, size_t len)
 
 uint8_t *base64_decode(uint8_t *bytes, size_t len)
 {
-	uint8_t *decoded = malloc(sizeof(uint8_t) * len / 1);
+	uint8_t *decoded = malloc(sizeof(uint8_t) * len / 1 + 1);
 
 	size_t encoded_idx = 0;
 
 	uint64_t byte_offset = 0;
 	uint8_t bit_offset = 0;
 
-	while (byte_offset < len)
+	size_t bytes_len = strlen((char *)bytes);
+
+	while (byte_offset < bytes_len)
 	{
 		uint8_t first_mask = 0x3F >> (bit_offset);
 		uint8_t remaining_bit_len = 8 - (6 - bit_offset);
